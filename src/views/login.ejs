@@ -1,0 +1,30 @@
+<div class="auth-heading">
+  <h1>Sisteme Giriş</h1>
+  <p>Dijital çalışma alanınıza erişmek için kimlik bilgilerinizle oturum açın.</p>
+</div>
+
+<% if (error) { %>
+  <div class="alert alert-danger" role="alert"><%= error %></div>
+<% } %>
+
+<form method="post" action="/login" class="form" autocomplete="on">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <input type="hidden" name="next" value="<%= next %>">
+
+  <label class="field">
+    <span>Kullanıcı Adı</span>
+    <input type="text" name="username" value="<%= username || '' %>" required autofocus autocomplete="username" placeholder="kullanici.adi">
+  </label>
+
+  <label class="field">
+    <span>Şifre</span>
+    <input type="password" name="password" required autocomplete="current-password" placeholder="••••••••">
+  </label>
+
+  <button type="submit" class="btn btn-primary btn-block btn-lg">Oturum Aç</button>
+</form>
+
+<div class="auth-secure">
+  <span class="dot dot-green" aria-hidden="true"></span>
+  <span>Güvenli yerel ağ bağlantısı · Şube <%= branch %></span>
+</div>

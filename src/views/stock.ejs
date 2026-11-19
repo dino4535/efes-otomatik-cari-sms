@@ -1,0 +1,166 @@
+<%
+  const canExport = can('stock.export');
+  const windowOptions = [30, 60, 90, 180, 365];
+%>
+<div class="page-head">
+  <div>
+    <h2>Stok Durumu</h2>
+    <p class="muted">
+      Veritabanı <%= erpDatabase %> · Şube <%= branch %> · Güncel stok, satış hızı, stok günü ve FIFO parti yaşı
+    </p>
+  </div>
+  <div class="page-actions">
+    <button type="button" class="btn btn-primary" id="stockReload">
+      <span class="btn-icon">↻</span> Listeyi Yenile
+    </button>
+    <% if (can('stock.litre')) { %>
+      <a class="btn btn-ghost" href="/stok/litreler">
+        <span class="btn-icon">ℓ</span> Litre Tanımları
+      </a>
+    <% } %>
+    <% if (canExport) { %>
+      <button type="button" class="btn btn-ghost" id="stockExport">
+        <span class="btn-icon">⤓</span> Excel
+      </button>
+    <% } %>
+  </div>
+</div>
+
+<div id="stockPage"
+     data-today="<%= today %>"
+     data-can-export="<%= canExport ? '1' : '0' %>">
+
+  <div class="kpi-grid stock-kpis">
+    <article class="kpi-card">
+      <span class="kpi-label">Stoklu Ürün</span>
+      <strong class="kpi-value" id="stockKpiProducts">—</strong>
+      <span class="kpi-sub" id="stockKpiProductsSub">Hesaplanıyor…</span>
+    </article>
+    <article class="kpi-card">
+      <span class="kpi-label">Toplam Litre</span>
+      <strong class="kpi-value" id="stockKpiLitre">—</strong>
+      <span class="kpi-sub" id="stockKpiLitreSub">Dönüşümü tanımlı ürünler</span>
+    </article>
+    <article class="kpi-card">
+      <span class="kpi-label">Toplam Adet</span>
+      <strong class="kpi-value" id="stockKpiAdet">—</strong>
+      <span class="kpi-sub" id="stockKpiAdetSub">Dönüşümü tanımlı ürünler</span>
+    </article>
+    <article class="kpi-card">
+      <span class="kpi-label">Ortalama Stok Yaşı</span>
+      <strong class="kpi-value" id="stockKpiAge">—</strong>
+      <span class="kpi-sub" id="stockKpiAgeSub">Stokla ağırlıklı FIFO</span>
+    </article>
+    <article class="kpi-card kpi-muted">
+      <span class="kpi-label">Stok Değeri</span>
+      <strong class="kpi-value" id="stockKpiValue">—</strong>
+      <span class="kpi-sub" id="stockKpiValueSub">Son alış fiyatına göre</span>
+    </article>
+  </div>
+
+  <section class="card">
+    <div class="table-toolbar">
+      <div class="filters">
+        <label class="field field-inline">
+          <span>Ara</span>
+          <input type="search" id="stockSearch" placeholder="Stok kodu veya adı" autocomplete="off">
+        </label>
+        <label class="field field-inline">
+          <span>Durum</span>
+          <select id="stockState">
+            <option value="in">Stokta Olanlar</option>
+            <option value="zero">Sıfır Stok</option>
+            <option value="negative">Negatif Stok</option>
+            <option value="all">Tümü</option>
+          </select>
+        </label>
+        <label class="field field-inline">
+          <span>Satış Penceresi</span>
+          <select id="stockWindow">
+            <% for (const days of windowOptions) { %>
+              <option value="<%= days %>"<%= days === 30 ? ' selected' : '' %>><%= days %> gün</option>
+            <% } %>
+          </select>
+        </label>
+        <label class="check stock-service-toggle">
+          <input type="checkbox" id="stockIncludeService">
+          <span>Hizmet/EFES kalemlerini göster</span>
+        </label>
+      </div>
+      <div class="toolbar-note">
+        <span class="dot dot-green"></span>
+        <span id="stockUpdated">Yükleniyor…</span>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="data-table stock-table">
+        <thead>
+          <tr>
+            <th><button type="button" class="th-sort" data-sort="code">Stok Kodu<span class="sort-mark"></span></button></th>
+            <th><button type="button" class="th-sort" data-sort="name">Stok Adı<span class="sort-mark"></span></button></th>
+            <th class="num"><button type="button" class="th-sort" data-sort="stock">Stok<span class="sort-mark"></span></button></th>
+            <th class="num"><button type="button" class="th-sort" data-sort="litre">Litre<span class="sort-mark"></span></button></th>
+            <th class="num"><button type="button" class="th-sort" data-sort="adet">Adet<span class="sort-mark"></span></button></th>
+            <th><button type="button" class="th-sort" data-sort="lastPurchase">Son Alış<span class="sort-mark"></span></button></th>
+            <th><button type="button" class="th-sort" data-sort="lastSale">Son Satış<span class="sort-mark"></span></button></th>
+            <th class="num"><button type="button" class="th-sort" data-sort="avgSales">Ort. Günlük Satış<span class="sort-mark"></span></button></th>
+            <th class="num"><button type="button" class="th-sort" data-sort="stockDays">Stok Günü<span class="sort-mark"></span></button></th>
+            <th class="num"><button type="button" class="th-sort" data-sort="age">Stok Yaşı<span class="sort-mark"></span></button></th>
+            <th class="num"><button type="button" class="th-sort" data-sort="oldestAge">En Eski Parti<span class="sort-mark"></span></button></th>
+            <th class="num"><button type="button" class="th-sort" data-sort="salePrice">Son Satış Fiyatı<span class="sort-mark"></span></button></th>
+            <th class="num"><button type="button" class="th-sort" data-sort="value">Stok Değeri<span class="sort-mark"></span></button></th>
+          </tr>
+        </thead>
+        <tbody id="stockBody">
+          <tr><td colspan="13" class="empty-state">Yükleniyor…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <span class="muted" id="stockSummary"></span>
+      <button type="button" class="btn btn-ghost btn-sm" id="stockPrev">‹ Önceki</button>
+      <span class="muted" id="stockPageInfo"></span>
+      <button type="button" class="btn btn-ghost btn-sm" id="stockNext">Sonraki ›</button>
+    </div>
+  </section>
+</div>
+
+<div class="modal" id="stockDetailModal" aria-hidden="true">
+  <div class="modal-backdrop" data-close-modal></div>
+  <div class="modal-dialog modal-xl" role="dialog" aria-modal="true" aria-labelledby="stockDetailTitle">
+    <div class="modal-head">
+      <div>
+        <h3 id="stockDetailTitle">Stok Hareketleri</h3>
+        <p class="muted" id="stockDetailMeta"></p>
+      </div>
+      <button type="button" class="icon-btn" data-close-modal aria-label="Kapat">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="table-wrap">
+        <table class="data-table compact stock-move-table">
+          <thead>
+            <tr>
+              <th>Tarih</th>
+              <th>Tür</th>
+              <th>Belge</th>
+              <th>Cari</th>
+              <th class="num">Miktar</th>
+              <th class="num">Birim Fiyat</th>
+              <th>Açıklama</th>
+            </tr>
+          </thead>
+          <tbody id="stockDetailBody">
+            <tr><td colspan="7" class="empty-state">Yükleniyor…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="hint stock-detail-hint">
+        Son 50 hareket gösterilir. Miktar, stok kaydının birincil birimindedir; fiyat birincil birim fiyatıdır.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script src="/public/js/stock.js" defer></script>

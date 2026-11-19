@@ -1,0 +1,124 @@
+<div class="page-head">
+  <div>
+    <h2>Stok Litre Tanımları</h2>
+    <p class="muted">
+      Veritabanı <%= erpDatabase %> · Şube <%= branch %> · Manuel litre tanımları ortaktır; aynı stok kodu tüm veritabanlarında bu değeri kullanır.
+    </p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-ghost" href="/stok">
+      <span class="btn-icon">←</span> Stok Durumu
+    </a>
+    <button type="button" class="btn btn-primary" id="litreSave" disabled>
+      <span class="btn-icon">✓</span> Değişiklikleri Kaydet
+    </button>
+  </div>
+</div>
+
+<div id="stockLitrePage"
+     data-today="<%= today %>">
+
+  <div class="kpi-grid stock-kpis">
+    <article class="kpi-card">
+      <span class="kpi-label">Listedeki Ürün</span>
+      <strong class="kpi-value" id="litreKpiTotal">—</strong>
+      <span class="kpi-sub" id="litreKpiTotalSub">Filtrelere göre</span>
+    </article>
+    <article class="kpi-card kpi-danger">
+      <span class="kpi-label">Litre Eksik</span>
+      <strong class="kpi-value" id="litreKpiMissing">—</strong>
+      <span class="kpi-sub">Birim, ürün adı veya manuel tanım yok</span>
+    </article>
+    <article class="kpi-card">
+      <span class="kpi-label">Manuel Tanım</span>
+      <strong class="kpi-value" id="litreKpiManual">—</strong>
+      <span class="kpi-sub">Bu tablodan girilen değerler</span>
+    </article>
+    <article class="kpi-card kpi-muted">
+      <span class="kpi-label">Stoklu Eksik</span>
+      <strong class="kpi-value" id="litreKpiStockMissing">—</strong>
+      <span class="kpi-sub">Litresi olmayan, stoğu sıfır olmayan ürün</span>
+    </article>
+  </div>
+
+  <section class="card">
+    <div class="table-toolbar">
+      <div class="filters">
+        <label class="field field-inline">
+          <span>Ara</span>
+          <input type="search" id="litreSearch" placeholder="Stok kodu veya adı" autocomplete="off">
+        </label>
+        <label class="field field-inline">
+          <span>Stok Durumu</span>
+          <select id="litreState">
+            <option value="all" selected>Tümü</option>
+            <option value="in">Stokta Olanlar</option>
+            <option value="zero">Sıfır Stok</option>
+            <option value="negative">Negatif Stok</option>
+          </select>
+        </label>
+        <label class="field field-inline">
+          <span>Litre Kaynağı</span>
+          <select id="litreSource">
+            <option value="all" selected>Tümü (Tanımlı + Eksik)</option>
+            <option value="missing">Sadece Eksikler</option>
+            <option value="manual">Manuel Tanımlı</option>
+            <option value="auto">Birim / Ürün Adı</option>
+          </select>
+        </label>
+        <label class="check stock-service-toggle">
+          <input type="checkbox" id="litreIncludeService">
+          <span>Hizmet/EFES kalemlerini göster</span>
+        </label>
+        <label class="check stock-service-toggle">
+          <input type="checkbox" id="litreIncludePackaging">
+          <span>Ambalaj/malzeme kalemlerini göster</span>
+        </label>
+      </div>
+      <div class="toolbar-note">
+        <span class="dot dot-green"></span>
+        <span id="litreUpdated">Yükleniyor…</span>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="data-table stock-litre-table">
+        <thead>
+          <tr>
+            <th>Stok Kodu</th>
+            <th>Stok Adı</th>
+            <th>Birim</th>
+            <th class="num">Stok</th>
+            <th>Kaynak</th>
+            <th class="num">Mevcut Lt / Birim</th>
+            <th>1 Birim Lt</th>
+            <th class="num">Toplam Lt</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="litreBody">
+          <tr><td colspan="9" class="empty-state">Yükleniyor…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <span class="muted" id="litreSummary"></span>
+      <span class="muted" id="litreDirtyCount"></span>
+      <button type="button" class="btn btn-ghost btn-sm" id="litrePrev">‹ Önceki</button>
+      <span class="muted" id="litrePageInfo"></span>
+      <button type="button" class="btn btn-ghost btn-sm" id="litreNext">Sonraki ›</button>
+    </div>
+  </section>
+
+  <p class="hint stock-litre-hint">
+    <strong>Düz sayı</strong> (ör. <code>12</code>): 1 stok biriminin toplam litresi.
+    <strong>Şişe/kutu hacmi</strong> (ör. <code>50 CL</code>, <code>70cl</code>, <code>330 ML</code>): koli/tava birimlerinde
+    paket adediyle otomatik çarpılır. <strong>Litre</strong> (ör. <code>12 LT</code>): 1 stok biriminin litresi.
+    Boş bırakıp kaydederseniz manuel tanım silinir; birim dönüşümü veya ürün adı hesabına dönülür.
+    Ambalaj/malzeme kartları varsayılan olarak gizlenir; manuel tanım girilenler yine görünür kalır.
+    Tüm ambalaj kalemlerini görmek için <strong>Ambalaj/malzeme kalemlerini göster</strong> kullanılır.
+  </p>
+</div>
+
+<script src="/public/js/stock-litre.js" defer></script>

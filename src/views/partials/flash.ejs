@@ -1,0 +1,6 @@
+<% if (typeof flash !== 'undefined' && flash) { %>
+  <div class="alert alert-<%= flash.type || 'info' %>" role="status">
+    <span><%= flash.message %></span>
+    <button type="button" class="alert-close" data-dismiss-alert aria-label="Kapat">×</button>
+  </div>
+<% } %>

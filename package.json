@@ -1,0 +1,28 @@
+{
+  "name": "efes-cari-sms",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Efes Cari Yaşlandırma ve SMS Yönetim Sistemi",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test tests/aging.test.js tests/aging-export.test.js tests/user-scope.test.js tests/ledger.test.js tests/stock.test.js",
+    "backup": "node scripts/backup.js"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "compression": "^1.7.5",
+    "dotenv": "^16.4.7",
+    "ejs": "^3.1.10",
+    "exceljs": "^4.4.0",
+    "express": "^4.21.2",
+    "express-async-errors": "^3.1.1",
+    "express-session": "^1.18.1",
+    "helmet": "^8.0.0",
+    "mssql": "^11.0.1",
+    "node-cron": "^3.0.3"
+  }
+}

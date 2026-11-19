@@ -1,0 +1,24 @@
+<%
+  const groups = [];
+  for (const permission of catalog) {
+    let group = groups.find((item) => item.name === permission.group);
+    if (!group) {
+      group = { name: permission.group, items: [] };
+      groups.push(group);
+    }
+    group.items.push(permission);
+  }
+%>
+<div class="perm-grid">
+  <% for (const group of groups) { %>
+    <div class="perm-group">
+      <h5><%= group.name %></h5>
+      <% for (const permission of group.items) { %>
+        <label class="check perm-check">
+          <input type="checkbox" data-permission="<%= permission.key %>" <%= (selected || []).includes(permission.key) ? 'checked' : '' %>>
+          <span><%= permission.label %></span>
+        </label>
+      <% } %>
+    </div>
+  <% } %>
+</div>

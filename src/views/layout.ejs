@@ -1,0 +1,198 @@
+<%
+  const displayName = currentUser.fullName || currentUser.username;
+  const roleLabel = currentUser.role === 'admin' ? 'Yönetici' : 'Kullanıcı';
+  const initial = (displayName || '?').slice(0, 1).toUpperCase();
+  const isActive = (prefix) => prefix === '/' ? currentPath === '/' : currentPath.startsWith(prefix);
+%>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <title><%= title ? `${title} · ` : '' %><%= companyName %> Cari SMS</title>
+  <link rel="stylesheet" href="/public/css/app.css">
+  <script src="/public/js/common.js" defer></script>
+</head>
+<body class="app-body">
+  <svg class="icon-sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.7 12 3l9 7.7"/><path d="M5.4 9.6V21h13.2V9.6"/><path d="M9.6 21v-6.2h4.8V21"/></symbol>
+      <symbol id="i-aging" viewBox="0 0 24 24"><rect x="2.6" y="5.6" width="18.8" height="12.8" rx="2.4"/><circle cx="12" cy="12" r="2.7"/><path d="M6.2 9.4h.01M17.8 14.6h.01"/></symbol>
+      <symbol id="i-ledger" viewBox="0 0 24 24"><path d="M4 7.5h15.5"/><path d="m16.5 4.5 3 3-3 3"/><path d="M20 16.5H4.5"/><path d="m7.5 13.5-3 3 3 3"/></symbol>
+      <symbol id="i-stock" viewBox="0 0 24 24"><path d="M3 8.2 12 4l9 4.2v9.6L12 22l-9-4.2z"/><path d="m3 8.2 9 4.2 9-4.2"/><path d="M12 12.4V22"/><path d="m7.5 6.1 9 4.2"/></symbol>
+      <symbol id="i-liter" viewBox="0 0 24 24"><path d="M9 3h6"/><path d="M10 3v6l-4.5 8.2A2.2 2.2 0 0 0 7.4 21h9.2a2.2 2.2 0 0 0 1.9-2.8L14 9V3"/><path d="M7.6 15h8.8"/></symbol>
+      <symbol id="i-sms" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.4"/><path d="m4.2 6.6 7.8 6 7.8-6"/></symbol>
+      <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.6 20c0-3.1 2.4-5.3 5.4-5.3s5.4 2.2 5.4 5.3"/><path d="M15.8 5.3a3.2 3.2 0 0 1 0 5.4"/><path d="M17.4 14.9c1.8.7 3 2.4 3 4.5"/></symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2.2"/><circle cx="15" cy="12" r="2.2"/><circle cx="7" cy="18" r="2.2"/></symbol>
+      <symbol id="i-audit" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4.2 6h.01M4.2 12h.01M4.2 18h.01"/></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2.2"/><path d="M8.2 10V7.8a3.8 3.8 0 0 1 7.6 0V10"/></symbol>
+      <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    </defs>
+  </svg>
+
+  <header class="app-bar">
+    <div class="app-bar-inner">
+      <a class="app-brand" href="/" aria-label="<%= companyName %> ana ekran">
+        <span class="brand-mark brand-mark-sm">E</span>
+        <span class="app-brand-text">
+          <strong><%= companyName %></strong>
+          <span>Cari &amp; SMS Platformu</span>
+        </span>
+      </a>
+
+      <button type="button" class="launcher-toggle" id="launcherToggle" aria-haspopup="true" aria-expanded="false" aria-controls="appLauncher">
+        <span class="launcher-glyph" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+        <span class="launcher-toggle-label">Uygulamalar</span>
+        <svg class="app-icon launcher-caret" aria-hidden="true"><use href="#i-chevron"/></svg>
+      </button>
+
+      <div class="app-bar-context">
+        <span class="app-bar-pill"><span class="dot dot-green"></span>ERP <strong><%= erpDatabase %></strong></span>
+        <span class="app-bar-pill">Şube <strong><%= branch %></strong></span>
+      </div>
+
+      <div class="app-bar-actions">
+        <span class="app-bar-date" id="serverDate"></span>
+        <span class="app-bar-divider" aria-hidden="true"></span>
+        <div class="app-user" title="<%= displayName %> · <%= roleLabel %>">
+          <span class="app-user-avatar"><%= initial %></span>
+          <span class="app-user-text">
+            <strong><%= displayName %></strong>
+            <span><%= roleLabel %></span>
+          </span>
+        </div>
+        <a class="app-bar-action" href="/change-password">Şifre</a>
+        <form method="post" action="/logout" class="app-bar-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="app-bar-action app-bar-action-danger">Çıkış</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="app-launcher" id="appLauncher" aria-hidden="true">
+      <div class="launcher-panel">
+        <div class="launcher-head">
+          <div>
+            <span class="launcher-eyebrow">Başlat Menüsü</span>
+            <h2>Uygulamalar</h2>
+            <p>Dijital çalışma alanınızdaki ekranlara buradan erişebilirsiniz.</p>
+          </div>
+          <span class="launcher-scope"><%= erpDatabase %> · Şube <%= branch %></span>
+        </div>
+
+        <div class="launcher-grid">
+          <a class="launcher-item<%= currentPath === '/' ? ' is-active' : '' %>" href="/">
+            <span class="launcher-tile tile-home"><svg class="app-icon" aria-hidden="true"><use href="#i-home"/></svg></span>
+            <span class="launcher-copy">
+              <strong>Ana Ekran</strong>
+              <span>Kısayollar ve günlük özet</span>
+            </span>
+            <% if (currentPath === '/') { %><span class="launcher-badge">Açık</span><% } %>
+          </a>
+          <% if (can('aging.view')) { %>
+            <a class="launcher-item<%= currentPath.startsWith('/aging') ? ' is-active' : '' %>" href="/aging">
+              <span class="launcher-tile tile-aging"><svg class="app-icon" aria-hidden="true"><use href="#i-aging"/></svg></span>
+              <span class="launcher-copy">
+                <strong>Cari Yaşlandırma</strong>
+                <span>Gecikme kovaları ve açık bakiyeler</span>
+              </span>
+              <% if (currentPath.startsWith('/aging')) { %><span class="launcher-badge">Açık</span><% } %>
+            </a>
+            <a class="launcher-item<%= currentPath.startsWith('/cari-hareketleri') ? ' is-active' : '' %>" href="/cari-hareketleri">
+              <span class="launcher-tile tile-ledger"><svg class="app-icon" aria-hidden="true"><use href="#i-ledger"/></svg></span>
+              <span class="launcher-copy">
+                <strong>Bayi Cari Hareketleri</strong>
+                <span>Cari ekstresi ve hareket listesi</span>
+              </span>
+              <% if (currentPath.startsWith('/cari-hareketleri')) { %><span class="launcher-badge">Açık</span><% } %>
+            </a>
+          <% } %>
+          <% if (can('stock.view')) { %>
+            <a class="launcher-item<%= currentPath === '/stok' ? ' is-active' : '' %>" href="/stok">
+              <span class="launcher-tile tile-stock"><svg class="app-icon" aria-hidden="true"><use href="#i-stock"/></svg></span>
+              <span class="launcher-copy">
+                <strong>Stok Durumu</strong>
+                <span>Miktar, satış hızı ve stok yaşı</span>
+              </span>
+              <% if (currentPath === '/stok') { %><span class="launcher-badge">Açık</span><% } %>
+            </a>
+            <% if (can('stock.litre')) { %>
+              <a class="launcher-item<%= currentPath.startsWith('/stok/litreler') ? ' is-active' : '' %>" href="/stok/litreler">
+                <span class="launcher-tile tile-stock"><svg class="app-icon" aria-hidden="true"><use href="#i-liter"/></svg></span>
+                <span class="launcher-copy">
+                  <strong>Stok Litre Tanımları</strong>
+                  <span>Ortak litre tablosu ve manuel giriş</span>
+                </span>
+                <% if (currentPath.startsWith('/stok/litreler')) { %><span class="launcher-badge">Açık</span><% } %>
+              </a>
+            <% } %>
+          <% } %>
+          <% if (can('sms.view')) { %>
+            <a class="launcher-item<%= currentPath.startsWith('/sms') ? ' is-active' : '' %>" href="/sms">
+              <span class="launcher-tile tile-sms"><svg class="app-icon" aria-hidden="true"><use href="#i-sms"/></svg></span>
+              <span class="launcher-copy">
+                <strong>SMS Yönetimi</strong>
+                <span>Gönderim kayıtları ve planlama</span>
+              </span>
+              <% if (currentPath.startsWith('/sms')) { %><span class="launcher-badge">Açık</span><% } %>
+            </a>
+          <% } %>
+          <% if (can('users.view')) { %>
+            <a class="launcher-item<%= currentPath.startsWith('/users') ? ' is-active' : '' %>" href="/users">
+              <span class="launcher-tile tile-users"><svg class="app-icon" aria-hidden="true"><use href="#i-users"/></svg></span>
+              <span class="launcher-copy">
+                <strong>Kullanıcılar</strong>
+                <span>Hesaplar, roller ve yetkiler</span>
+              </span>
+              <% if (currentPath.startsWith('/users')) { %><span class="launcher-badge">Açık</span><% } %>
+            </a>
+          <% } %>
+          <% if (can('settings.manage')) { %>
+            <a class="launcher-item<%= currentPath.startsWith('/settings') ? ' is-active' : '' %>" href="/settings">
+              <span class="launcher-tile tile-settings"><svg class="app-icon" aria-hidden="true"><use href="#i-settings"/></svg></span>
+              <span class="launcher-copy">
+                <strong>Ayarlar</strong>
+                <span>ERP bağlantısı ve sistem ayarları</span>
+              </span>
+              <% if (currentPath.startsWith('/settings')) { %><span class="launcher-badge">Açık</span><% } %>
+            </a>
+          <% } %>
+          <% if (can('audit.view')) { %>
+            <a class="launcher-item<%= currentPath.startsWith('/audit') ? ' is-active' : '' %>" href="/audit">
+              <span class="launcher-tile tile-audit"><svg class="app-icon" aria-hidden="true"><use href="#i-audit"/></svg></span>
+              <span class="launcher-copy">
+                <strong>İşlem Kayıtları</strong>
+                <span>Denetim izi ve işlem geçmişi</span>
+              </span>
+              <% if (currentPath.startsWith('/audit')) { %><span class="launcher-badge">Açık</span><% } %>
+            </a>
+          <% } %>
+          <a class="launcher-item<%= currentPath.startsWith('/change-password') ? ' is-active' : '' %>" href="/change-password">
+            <span class="launcher-tile tile-profile"><svg class="app-icon" aria-hidden="true"><use href="#i-lock"/></svg></span>
+            <span class="launcher-copy">
+              <strong>Şifre Değiştir</strong>
+              <span>Hesap güvenliği ve oturum</span>
+            </span>
+            <% if (currentPath.startsWith('/change-password')) { %><span class="launcher-badge">Açık</span><% } %>
+          </a>
+        </div>
+
+        <div class="launcher-foot">
+          <span><kbd>Esc</kbd> ile kapat · <kbd>Alt</kbd>+<kbd>U</kbd> ile aç</span>
+          <span><%= displayName %> · <%= roleLabel %></span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <div class="page-frame">
+      <%- include('partials/flash') %>
+      <%- body %>
+    </div>
+  </main>
+
+  <div id="toastContainer" class="toast-container"></div>
+</body>
+</html>

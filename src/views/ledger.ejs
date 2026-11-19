@@ -1,0 +1,226 @@
+<%
+  const canDetail = can('aging.detail');
+  const canFinance = can('finance.view');
+  const yearStart = `${today.slice(0, 4)}-01-01`;
+  const columnCount = canFinance ? 12 : 11;
+%>
+<div class="page-head">
+  <div>
+    <h2>Bayi Cari Hareketleri</h2>
+    <p class="muted">
+      Veritabanı <%= erpDatabase %> · Şube <%= branch %> · Cari seçin, tarih aralığına göre borç/alacak ekstresini görüntüleyin
+    </p>
+  </div>
+  <div class="page-actions">
+    <button type="button" class="btn btn-primary" id="ledgerRefresh">
+      <span class="btn-icon">↻</span> Listeyi Yenile
+    </button>
+  </div>
+</div>
+
+<div class="ledger-shell" id="ledgerPage"
+     data-can-detail="<%= canDetail ? '1' : '0' %>"
+     data-can-finance="<%= canFinance ? '1' : '0' %>"
+     data-today="<%= today %>"
+     data-year-start="<%= yearStart %>">
+
+  <aside class="card ledger-side">
+    <div class="ledger-side-head">
+      <div>
+        <h3>Cariler</h3>
+        <p class="muted" id="dealerSummary">Yükleniyor…</p>
+      </div>
+      <span class="badge badge-soft" id="dealerCount">—</span>
+    </div>
+
+    <label class="field ledger-search">
+      <span>Cari Ara</span>
+      <input type="search" id="dealerSearch" placeholder="Kod, isim veya telefon" autocomplete="off">
+    </label>
+
+    <div class="ledger-side-tools">
+      <label class="check">
+        <input type="checkbox" id="dealerOnlyBalance">
+        <span>Yalnızca bakiyeli</span>
+      </label>
+      <button type="button" class="btn btn-ghost btn-sm" id="dealerReload" title="Seçili filtrelerle yenile">↻</button>
+    </div>
+
+    <div class="dealer-list" id="dealerList">
+      <div class="dealer-list-empty">Cariler yükleniyor…</div>
+    </div>
+
+    <div class="ledger-pager">
+      <button type="button" class="btn btn-ghost btn-sm" id="dealerPrev" disabled>‹</button>
+      <span class="muted" id="dealerPageInfo">—</span>
+      <button type="button" class="btn btn-ghost btn-sm" id="dealerNext" disabled>›</button>
+    </div>
+  </aside>
+
+  <section class="card ledger-main" id="statementCard">
+    <% if (!canDetail) { %>
+      <div class="ledger-empty">
+        <span class="ledger-empty-icon">🔒</span>
+        <h3>Ekstre Yetkisi Gerekli</h3>
+        <p>Cari hareketlerini görüntülemek için yöneticinizden <strong>Cari detay</strong> yetkisini talep edin.</p>
+      </div>
+    <% } else { %>
+      <div class="ledger-empty" id="statementEmpty">
+        <span class="ledger-empty-icon">⇄</span>
+        <h3>Bir cari seçin</h3>
+        <p>Sol taraftaki listeden cari hesap seçtiğinizde hareketler ve ekstre burada gösterilir.</p>
+      </div>
+
+      <div class="hidden" id="statementWrap">
+        <header class="statement-head">
+          <div class="statement-title">
+            <span class="statement-kicker">Cari Ekstre</span>
+            <h3 id="stmtTitle">—</h3>
+            <p class="muted" id="stmtMeta">—</p>
+          </div>
+          <div class="statement-balance">
+            <span>Güncel Bakiye</span>
+            <strong id="stmtCurrent">—</strong>
+            <small id="stmtCurrentNote">Tüm hareketler</small>
+          </div>
+        </header>
+
+        <div class="statement-filters">
+          <label class="field field-inline">
+            <span>Başlangıç</span>
+            <input type="date" id="stmtStart" value="<%= yearStart %>">
+          </label>
+          <label class="field field-inline">
+            <span>Bitiş</span>
+            <input type="date" id="stmtEnd" value="<%= today %>">
+          </label>
+          <button type="button" class="btn btn-primary btn-sm" id="stmtApply">Uygula</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="stmtAll">Tümü</button>
+          <a class="btn btn-ghost btn-sm" id="stmtExport" href="#" hidden>
+            <span class="btn-icon">⤓</span> Excel İndir
+          </a>
+          <span class="statement-range-note" id="stmtRangeNote"></span>
+        </div>
+
+        <div class="statement-kpis">
+          <div class="statement-kpi">
+            <span>Devir</span>
+            <strong id="stmtOpening">—</strong>
+          </div>
+          <div class="statement-kpi">
+            <span>Dönem Borcu</span>
+            <strong id="stmtDebit">—</strong>
+          </div>
+          <div class="statement-kpi">
+            <span>Dönem Alacağı</span>
+            <strong id="stmtCredit">—</strong>
+          </div>
+          <div class="statement-kpi">
+            <span>Dönem Kapanışı</span>
+            <strong id="stmtClosing">—</strong>
+          </div>
+        </div>
+
+        <div class="statement-kpis statement-maturity">
+          <div class="statement-kpi">
+            <span>Ağırlıklı Ort. Vade Tarihi</span>
+            <strong id="stmtWeightedDue">—</strong>
+            <small id="stmtWeightedDueSub">—</small>
+          </div>
+          <div class="statement-kpi">
+            <span>Ortalama Vade</span>
+            <strong id="stmtAvgMaturity">—</strong>
+            <small>Fatura tarihi → vade tarihi</small>
+          </div>
+          <div class="statement-kpi">
+            <span>Ağırlıklı Ort. Tahsilat Tarihi</span>
+            <strong id="stmtWeightedCollection">—</strong>
+            <small id="stmtWeightedCollectionSub">—</small>
+          </div>
+          <div class="statement-kpi">
+            <span>Ort. Tahsilat Farkı</span>
+            <strong id="stmtCollectionDelay">—</strong>
+            <small>Vade tarihine göre</small>
+          </div>
+        </div>
+
+        <div class="statement-section-head">
+          <span>Tür Bazında Tutarlar</span>
+          <small>Seçili dönemdeki hareketler</small>
+        </div>
+        <div class="statement-types" id="stmtTypeCards">
+          <div class="type-summary-empty">Hareketler yükleniyor…</div>
+        </div>
+
+        <% if (canFinance) { %>
+          <div class="statement-kpis statement-finance">
+            <div class="statement-kpi">
+              <span>Fonlanan Tutar</span>
+              <strong id="stmtFundedAmount">—</strong>
+              <small id="stmtFundedAmountSub">—</small>
+            </div>
+            <div class="statement-kpi">
+              <span>Ort. Fonlama Günü</span>
+              <strong id="stmtFundedDays">—</strong>
+              <small id="stmtFundedDaysSub">Tutar ağırlıklı</small>
+            </div>
+            <div class="statement-kpi">
+              <span>Geç Ödenen Faiz</span>
+              <strong id="stmtLateInterest">—</strong>
+              <small id="stmtLateInterestSub">—</small>
+            </div>
+            <div class="statement-kpi">
+              <span>Mevduat Faiz Kazancı</span>
+              <strong id="stmtTotalInterest">—</strong>
+              <small id="stmtTotalInterestSub">—</small>
+            </div>
+          </div>
+          <p class="statement-hint" id="stmtFinanceHint">
+            Fonlama; vadesi geçmiş açık veya kısmi fatura kalanıdır. Mevduat faizi, ayarlardaki yıllık oranla
+            basit faiz (gün / 365) olarak hesaplanır. Geç ödenen faiz tahsil edilmiş gecikmeleri,
+            toplam kazanç ayrıca halen devam eden vadesi geçmiş tutarları içerir.
+          </p>
+        <% } %>
+
+        <p class="statement-hint">
+          Ağırlıklı ortalamalar, seçili dönemdeki fatura ve tahsilat tutarlarına göre hesaplanır.
+          Gecikme; ödenen faturalarda son tahsilat tarihi − vade, açık veya kısmi faturalarda rapor tarihi − vade olarak hesaplanır.
+          Tahsilatlar yaşlandırmadaki gibi aynı gün birebir eşleşme ve ardından FIFO ile faturalara bağlanır.
+          Çeklerde ve vadeli tahsilatlarda kayıt tarihi değil vade tarihi esas alınır; vadesi bitiş tarihinden sonra olan çekler açık faturayı kapatmaz.
+          Bu nedenle açık fatura kalanı ile kapanış bakiyesi, vadesi gelmemiş çekler kadar farklı olabilir. Durum ve ödenme tarihi seçili bitiş tarihine göredir.
+        </p>
+
+        <div class="table-wrap">
+          <table class="data-table ledger-table">
+            <thead>
+              <tr>
+                <th>Tarih</th>
+                <th>Vade Tarihi</th>
+                <th>Gecikme (Gün)</th>
+                <% if (canFinance) { %><th>Mevduat Faizi</th><% } %>
+                <th>Ödenme Tarihi</th>
+                <th>Belge No</th>
+                <th>Tür</th>
+                <th>Durum</th>
+                <th>Açıklama</th>
+                <th class="num">Borç</th>
+                <th class="num">Alacak</th>
+                <th class="num">Bakiye</th>
+              </tr>
+            </thead>
+            <tbody id="stmtBody">
+              <tr><td colspan="<%= columnCount %>" class="empty-state">Hareketler yükleniyor…</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="statement-foot">
+          <span id="stmtFootLeft" class="muted">—</span>
+          <span id="stmtFootRight" class="muted">—</span>
+        </div>
+      </div>
+    <% } %>
+  </section>
+</div>
+
+<script src="/public/js/ledger.js" defer></script>

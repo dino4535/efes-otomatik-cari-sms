@@ -1,0 +1,32 @@
+name: efes-cari-sms
+
+services:
+  app:
+    build:
+      context: .
+    image: efes-cari-sms:1.0.0
+    container_name: efes-cari-sms
+    restart: unless-stopped
+    init: true
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+      APP_DB_PATH: /app/data/app.db
+      TZ: Europe/Istanbul
+    ports:
+      - "${PORT:-5555}:3000"
+    volumes:
+      - efes-data:/app/data
+      - efes-logs:/app/logs
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+volumes:
+  efes-data:
+  efes-logs:

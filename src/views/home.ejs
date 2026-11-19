@@ -1,0 +1,165 @@
+<%
+  const canAging = can('aging.view');
+  const canDetail = can('aging.detail');
+  const canStock = can('stock.view');
+  const canStockLitre = can('stock.litre');
+  const canSms = can('sms.view');
+  const canUsers = can('users.view');
+  const canSettings = can('settings.manage');
+  const canAudit = can('audit.view');
+  const displayName = currentUser.fullName || currentUser.username;
+  const todayLabel = new Intl.DateTimeFormat('tr-TR', {
+    timeZone: 'Europe/Istanbul',
+    dateStyle: 'long',
+  }).format(new Date(`${today}T12:00:00+03:00`));
+%>
+<section class="home-hero">
+  <div class="home-hero-text">
+    <span class="home-eyebrow"><%= companyName %> · Dijital Çalışma Alanı</span>
+    <h2 id="homeGreeting" data-name="<%= displayName %>">Hoş geldiniz, <%= displayName %></h2>
+    <p>Cari, tahsilat ve SMS süreçlerinizi tek ekrandan yönetin. Başlamak için bir uygulama seçin.</p>
+    <div class="home-scope">
+      <span class="home-scope-pill">ERP: <strong><%= erpDatabase %></strong></span>
+      <span class="home-scope-pill">Şube: <strong><%= branch %></strong></span>
+      <span class="home-scope-pill">Rol: <strong><%= currentUser.role === 'admin' ? 'Yönetici' : 'Kullanıcı' %></strong></span>
+    </div>
+  </div>
+  <div class="home-clock" aria-live="polite">
+    <strong id="homeClock">--:--</strong>
+    <span id="homeDate"><%= today %></span>
+  </div>
+</section>
+
+<% if (canAging || canSms) { %>
+<div class="kpi-grid">
+  <% if (canAging) { %>
+    <article class="kpi-card">
+      <span class="kpi-label">Toplam Açık Borç</span>
+      <strong class="kpi-value" id="homeTotalDebt">—</strong>
+      <span class="kpi-sub" id="homeTotalDebtSub">Hesaplanıyor…</span>
+    </article>
+    <article class="kpi-card kpi-danger">
+      <span class="kpi-label">30+ Gün Gecikmiş</span>
+      <strong class="kpi-value" id="homeOverdue">—</strong>
+      <span class="kpi-sub" id="homeOverdueSub">Hesaplanıyor…</span>
+    </article>
+    <article class="kpi-card">
+      <span class="kpi-label">Borçlu Cari</span>
+      <strong class="kpi-value" id="homeDebtors">—</strong>
+      <span class="kpi-sub" id="homeDebtorsSub">Hesaplanıyor…</span>
+    </article>
+  <% } %>
+  <% if (canSms) { %>
+    <article class="kpi-card kpi-muted">
+      <span class="kpi-label">Bugünkü SMS</span>
+      <strong class="kpi-value" id="homeSmsToday">—</strong>
+      <span class="kpi-sub" id="homeSmsSub">Hesaplanıyor…</span>
+    </article>
+  <% } %>
+</div>
+<% } %>
+
+<div class="home-grid">
+  <section class="desktop-panel">
+    <div class="desktop-head">
+      <div>
+        <h3>Uygulamalar</h3>
+        <p class="muted">İşlem ekranlarına masaüstü kısayollarıyla erişin</p>
+      </div>
+      <span class="desktop-head-note"><%= todayLabel %> · Üst menüden de açabilirsiniz</span>
+    </div>
+
+    <div class="desktop-grid">
+      <% if (canAging) { %>
+        <a class="desktop-icon" href="/aging">
+          <span class="desktop-icon-tile tile-aging"><svg class="app-icon" aria-hidden="true"><use href="#i-aging"/></svg></span>
+          <strong>Cari Yaşlandırma</strong>
+          <span class="desktop-icon-desc">Açık bakiyeler, gecikme kovaları ve Excel</span>
+        </a>
+        <a class="desktop-icon" href="/cari-hareketleri">
+          <span class="desktop-icon-tile tile-ledger"><svg class="app-icon" aria-hidden="true"><use href="#i-ledger"/></svg></span>
+          <strong>Bayi Cari Hareketleri</strong>
+          <span class="desktop-icon-desc">Cari seçin, ekstre ve hareketleri görün</span>
+        </a>
+      <% } %>
+      <% if (canStock) { %>
+        <a class="desktop-icon" href="/stok">
+          <span class="desktop-icon-tile tile-stock"><svg class="app-icon" aria-hidden="true"><use href="#i-stock"/></svg></span>
+          <strong>Stok Durumu</strong>
+          <span class="desktop-icon-desc">Litre/adet stok, satış hızı ve FIFO yaş</span>
+        </a>
+        <% if (canStockLitre) { %>
+          <a class="desktop-icon" href="/stok/litreler">
+            <span class="desktop-icon-tile tile-stock"><svg class="app-icon" aria-hidden="true"><use href="#i-liter"/></svg></span>
+            <strong>Stok Litre Tanımları</strong>
+            <span class="desktop-icon-desc">Ortak litre tablosu ve manuel giriş</span>
+          </a>
+        <% } %>
+      <% } %>
+      <% if (canSms) { %>
+        <a class="desktop-icon" href="/sms">
+          <span class="desktop-icon-tile tile-sms"><svg class="app-icon" aria-hidden="true"><use href="#i-sms"/></svg></span>
+          <strong>SMS Yönetimi</strong>
+          <span class="desktop-icon-desc">Gönderim kayıtları ve planlanan mesajlar</span>
+        </a>
+      <% } %>
+      <% if (canUsers) { %>
+        <a class="desktop-icon" href="/users">
+          <span class="desktop-icon-tile tile-users"><svg class="app-icon" aria-hidden="true"><use href="#i-users"/></svg></span>
+          <strong>Kullanıcılar</strong>
+          <span class="desktop-icon-desc">Hesaplar, roller ve yetki atamaları</span>
+        </a>
+      <% } %>
+      <% if (canSettings) { %>
+        <a class="desktop-icon" href="/settings">
+          <span class="desktop-icon-tile tile-settings"><svg class="app-icon" aria-hidden="true"><use href="#i-settings"/></svg></span>
+          <strong>Ayarlar</strong>
+          <span class="desktop-icon-desc">ERP bağlantısı, SMS ve sistem ayarları</span>
+        </a>
+      <% } %>
+      <% if (canAudit) { %>
+        <a class="desktop-icon" href="/audit">
+          <span class="desktop-icon-tile tile-audit"><svg class="app-icon" aria-hidden="true"><use href="#i-audit"/></svg></span>
+          <strong>İşlem Kayıtları</strong>
+          <span class="desktop-icon-desc">Sistemde yapılan işlemlerin denetim izi</span>
+        </a>
+      <% } %>
+      <a class="desktop-icon" href="/change-password">
+        <span class="desktop-icon-tile tile-profile"><svg class="app-icon" aria-hidden="true"><use href="#i-lock"/></svg></span>
+        <strong>Şifre Değiştir</strong>
+        <span class="desktop-icon-desc">Hesap güvenliği ve oturum bilgileri</span>
+      </a>
+    </div>
+  </section>
+
+  <aside class="home-side">
+    <section class="card home-side-card">
+      <div class="card-head">
+        <div>
+          <h3>Sistem Bilgileri</h3>
+          <p class="muted">Oturum kapsamınız</p>
+        </div>
+      </div>
+      <dl class="home-info-list">
+        <div><dt>ERP Veritabanı</dt><dd><%= erpDatabase %></dd></div>
+        <div><dt>Şube</dt><dd><%= branch %></dd></div>
+        <div><dt>Kullanıcı</dt><dd><%= currentUser.username %></dd></div>
+        <div><dt>Rol</dt><dd><%= currentUser.role === 'admin' ? 'Yönetici' : 'Kullanıcı' %></dd></div>
+        <div><dt>Son Giriş</dt><dd><%= currentUser.lastLoginAt ? new Intl.DateTimeFormat('tr-TR', { timeZone: 'Europe/Istanbul', dateStyle: 'short', timeStyle: 'short' }).format(new Date(currentUser.lastLoginAt)) : '—' %></dd></div>
+      </dl>
+    </section>
+
+    <% if (canDetail) { %>
+      <section class="card home-side-card home-tip-card">
+        <span class="home-tip-icon">⇄</span>
+        <div>
+          <h4>Bayi cari ekstresi</h4>
+          <p>Bayi Cari Hareketleri ekranında bir cari seçerek tarih aralığına göre borç, alacak ve bakiye hareketlerini görüntüleyebilirsiniz.</p>
+          <a class="home-tip-link" href="/cari-hareketleri">Ekrana git →</a>
+        </div>
+      </section>
+    <% } %>
+  </aside>
+</div>
+
+<script src="/public/js/home.js" defer></script>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <title><%= title ? `${title} · ` : '' %><%= companyName %> Cari SMS</title>
+  <link rel="stylesheet" href="/public/css/app.css">
+  <script src="/public/js/common.js" defer></script>
+</head>
+<body class="auth-body">
+  <main class="auth-shell">
+    <section class="auth-card">
+      <div class="auth-brand">
+        <div class="brand-mark brand-mark-lg">E</div>
+        <div>
+          <strong><%= companyName %></strong>
+          <span>Dijital Cari &amp; SMS Platformu</span>
+        </div>
+      </div>
+      <%- include('partials/flash') %>
+      <%- body %>
+      <div class="auth-footer">
+        <span>Şube <%= branch %> · Yerel ağ uygulaması</span>
+        <span>© <%= new Date().getFullYear() %></span>
+      </div>
+    </section>
+    <p class="auth-note">Bu uygulama yalnızca yetkili kullanıcılar içindir. Tüm işlemler kayıt altına alınır.</p>
+  </main>
+  <div id="toastContainer" class="toast-container"></div>
+</body>
+</html>

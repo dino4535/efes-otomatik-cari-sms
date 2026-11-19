@@ -1,0 +1,275 @@
+<%
+  const isAdmin = currentUser.role === 'admin';
+%>
+<div class="page-head">
+  <div>
+    <h2>Sistem Ayarları</h2>
+    <p class="muted">Yaşlandırma kuralları, SMS gönderim ayarları ve şablonlar</p>
+  </div>
+  <div class="page-actions">
+    <button type="button" class="btn btn-ghost" id="testErpBtn">ERP Bağlantısını Test Et</button>
+    <button type="button" class="btn btn-primary" id="saveSettingsBtn">Ayarları Kaydet</button>
+  </div>
+</div>
+
+<div class="settings-grid">
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h3>Firma &amp; Genel</h3>
+        <p class="muted">SMS metinlerinde ve ekranlarda kullanılan temel bilgiler.</p>
+      </div>
+    </div>
+    <div class="form form-grid">
+      <label class="field">
+        <span>Firma Adı</span>
+        <input type="text" data-setting="app.company_name" value="<%= settings['app.company_name'] || '' %>" maxlength="100">
+      </label>
+      <label class="field">
+        <span>Firma Telefonu</span>
+        <input type="text" data-setting="app.company_phone" value="<%= settings['app.company_phone'] || '' %>" maxlength="50" placeholder="Örn. 0322 123 45 67">
+      </label>
+      <% if (isAdmin) { %>
+        <label class="field">
+          <span>Varsayılan Şube Kodu</span>
+          <input type="number" data-setting="app.branch" value="<%= settings['app.branch'] || branch %>" min="0" max="999">
+          <small class="hint">Kullanıcı bazlı şube tanımlanmamışsa ve arka plan SMS görevinde kullanılır. Asıl kullanıcı şubesi Kullanıcılar ekranından atanır. Cari ana kayıtlarındaki -1 (ortak) kayıtlar otomatik dahil edilir.</small>
+        </label>
+      <% } %>
+      <label class="field">
+        <span>Saat Dilimi</span>
+        <input type="text" data-setting="app.timezone" value="<%= settings['app.timezone'] || 'Europe/Istanbul' %>" maxlength="50">
+      </label>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h3>Yaşlandırma</h3>
+        <p class="muted">Fatura tarihine göre yaşlandırma ve eşleştirme kuralları.</p>
+      </div>
+    </div>
+    <div class="form form-grid">
+      <label class="field">
+        <span>Cari Tipi</span>
+        <select data-setting="aging.customer_type">
+          <option value="A" <%= (settings['aging.customer_type'] || 'A') === 'A' ? 'selected' : '' %>>A · Müşteri</option>
+          <option value="S" <%= settings['aging.customer_type'] === 'S' ? 'selected' : '' %>>S · Tedarikçi</option>
+          <option value="D" <%= settings['aging.customer_type'] === 'D' ? 'selected' : '' %>>D · Diğer</option>
+        </select>
+        <small class="hint">Varsayılan: A (müşteri carileri).</small>
+      </label>
+      <label class="field">
+        <span>Gecikme Eşiği (gün)</span>
+        <input type="number" data-setting="aging.overdue_days" value="<%= settings['aging.overdue_days'] || 30 %>" min="1" max="3650">
+      </label>
+      <label class="field">
+        <span>Aynı Gün Eşleşme Toleransı (TL)</span>
+        <input type="number" data-setting="aging.tolerance" value="<%= settings['aging.tolerance'] || '0' %>" min="0" step="0.01" max="10000">
+        <small class="hint">0 = tolerans yok. Peşin faturalar hariç tutulurken aynı gün fatura ve tahsilat tutarları arasındaki fark bu değere kadar ise birebir eşleşmiş sayılır.</small>
+      </label>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h3>Finans</h3>
+        <p class="muted">Vadesi geçen alacakların fonlama maliyeti ve mevduat faizi karşılığı.</p>
+      </div>
+    </div>
+    <div class="form form-grid">
+      <label class="field">
+        <span>Mevduat Faiz Oranı (yıllık %)</span>
+        <input type="number" data-setting="finance.deposit_rate" value="<%= settings['finance.deposit_rate'] || '0' %>" min="0" max="100" step="0.01">
+        <small class="hint">Geç ödenen ve vadesi geçen faturalarda basit faiz (gün / 365) olarak hesaplanır. <strong>0 = faiz hesaplama kapalı.</strong></small>
+      </label>
+      <div class="field">
+        <span>Görünürlük</span>
+        <p class="hint">Fonlama ve mevduat faizi kartları kullanıcı bazlı <strong>Finans bilgilerini görüntüle</strong> yetkisiyle gösterilir. Yetki, Kullanıcılar ekranından atanır.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card card-full">
+    <div class="card-head">
+      <div>
+        <h3>ERP Veritabanı</h3>
+        <p class="muted">SQL Server bağlantı bilgileri. Kaydettiğinizde yeni bağlantı bir sonraki sorguda kullanılır.</p>
+      </div>
+    </div>
+    <div class="form form-grid">
+      <label class="field">
+        <span>Sunucu</span>
+        <input type="text" data-setting="erp.server" value="<%= erp.server %>" maxlength="255" placeholder="192.168.12.192">
+      </label>
+      <label class="field">
+        <span>Port</span>
+        <input type="number" data-setting="erp.port" value="<%= erp.port %>" min="1" max="65535">
+        <small class="hint">Varsayılan SQL Server portu: 1433</small>
+      </label>
+      <% if (isAdmin) { %>
+        <label class="field">
+          <span>Varsayılan Veritabanı</span>
+          <input type="text" data-setting="erp.database" value="<%= erp.database %>" maxlength="128" placeholder="DINO2026">
+          <small class="hint">Kullanıcı bazlı veritabanı tanımlanmamışsa ve arka plan SMS görevinde kullanılır. Asıl kullanıcı veritabanı Kullanıcılar ekranından atanır.</small>
+        </label>
+      <% } %>
+      <label class="field">
+        <span>Kullanıcı</span>
+        <input type="text" data-setting="erp.user" value="<%= erp.user %>" maxlength="128" autocomplete="off">
+      </label>
+      <label class="field">
+        <span>Şifre</span>
+        <input type="password" data-setting="erp.password" value="" maxlength="255" autocomplete="new-password" placeholder="<%= erpPasswordSet ? 'Kayıtlı şifre kullanılıyor — değiştirmek için girin' : 'ERP şifresi' %>">
+        <small class="hint">Boş bırakırsanız mevcut şifre korunur.</small>
+      </label>
+      <div class="field">
+        <span>Bağlantı Seçenekleri</span>
+        <label class="check"><input type="checkbox" data-setting="erp.encrypt" <%= erp.encrypt ? 'checked' : '' %>><span>TLS/şifreleme kullan</span></label>
+        <label class="check"><input type="checkbox" data-setting="erp.trust_cert" <%= erp.trustServerCertificate ? 'checked' : '' %>><span>Sunucu sertifikasına güven</span></label>
+      </div>
+    </div>
+    <div class="alert alert-info compact-alert">
+      ERP şifresi yerel SQLite ayar veritabanında saklanır. <strong>Veritabanı ve şube kullanıcı bazlıdır;</strong> Kullanıcılar ekranından atanır ve kullanıcılar bu değerleri değiştiremez. Buradaki değerler yalnızca varsayılan ve arka plan görevleri içindir. <code>data/app.db</code> dosyasını koruyun.
+    </div>
+  </section>
+
+  <section class="card card-full">
+    <div class="card-head">
+      <div>
+        <h3>SMS Gönderimi</h3>
+        <p class="muted">Otomatik gönderim, aralık ve sessiz saat kuralları.</p>
+      </div>
+      <label class="switch">
+        <input type="checkbox" data-setting="sms.enabled" <%= settings['sms.enabled'] === '1' ? 'checked' : '' %>>
+        <span class="switch-track"></span>
+        <span class="switch-label">Otomatik SMS</span>
+      </label>
+    </div>
+    <div class="form form-grid">
+      <label class="field">
+        <span>Sağlayıcı</span>
+        <input type="text" data-setting="sms.provider" value="<%= settings['sms.provider'] || 'test' %>" maxlength="50">
+        <small class="hint">Şu an test/simülasyon altyapısı kullanılıyor.</small>
+      </label>
+      <label class="field">
+        <span>Varsayılan Şablon</span>
+        <select data-setting="sms.template_id">
+          <% for (const template of templates) { %>
+            <option value="<%= template.id %>" <%= String(settings['sms.template_id']) === String(template.id) ? 'selected' : '' %>><%= template.name %><%= template.is_active ? '' : ' (pasif)' %></option>
+          <% } %>
+        </select>
+      </label>
+      <label class="field">
+        <span>Genel Gönderim Aralığı (gün)</span>
+        <input type="number" data-setting="sms.interval_days" value="<%= settings['sms.interval_days'] || 7 %>" min="0" max="365">
+        <small class="hint">Cari bazlı aralık tanımlanmamışsa bu değer kullanılır. 0 = her gün.</small>
+      </label>
+      <label class="field">
+        <span>Günlük Maksimum SMS</span>
+        <input type="number" data-setting="sms.max_per_day" value="<%= settings['sms.max_per_day'] || 100 %>" min="0" max="10000">
+      </label>
+      <label class="field">
+        <span>Minimum 30+ Borç (TL)</span>
+        <input type="number" data-setting="sms.min_debt" value="<%= settings['sms.min_debt'] || 0 %>" min="0" step="0.01">
+      </label>
+      <label class="field">
+        <span>Günlük Gönderim Saati</span>
+        <input type="time" data-setting="sms.send_time" value="<%= settings['sms.send_time'] || '10:00' %>">
+      </label>
+      <label class="field">
+        <span>Sessiz Saat Başlangıcı</span>
+        <input type="time" data-setting="sms.quiet_start" value="<%= settings['sms.quiet_start'] || '20:00' %>">
+      </label>
+      <label class="field">
+        <span>Sessiz Saat Bitişi</span>
+        <input type="time" data-setting="sms.quiet_end" value="<%= settings['sms.quiet_end'] || '09:00' %>">
+      </label>
+      <label class="check field-full">
+        <input type="checkbox" data-setting="sms.test_mode" <%= settings['sms.test_mode'] === '1' ? 'checked' : '' %>>
+        <span>Test modu — gerçek SMS gönderilmez, gönderimler simüle edilir</span>
+      </label>
+    </div>
+    <div class="alert alert-info compact-alert">
+      Canlı SMS sağlayıcısı henüz bağlı değil. Sağlayıcı API bilgileri eklendiğinde test modu kapatılarak gerçek gönderim yapılabilecek.
+    </div>
+  </section>
+</div>
+
+<section class="card">
+  <div class="card-head">
+    <div>
+      <h3>SMS Şablonları</h3>
+      <p class="muted">Kullanılabilir değişkenler: <code>{cari_isim}</code>, <code>{cari_kod}</code>, <code>{sube}</code>, <code>{toplam_borc}</code>, <code>{overdue30}</code>, <code>{en_yasli_gun}</code>, <code>{firma_tel}</code>, <code>{firma_adi}</code>, <code>{tarih}</code></p>
+    </div>
+    <button type="button" class="btn btn-primary btn-sm" id="newTemplateBtn">+ Yeni Şablon</button>
+  </div>
+
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Şablon</th>
+          <th>Mesaj</th>
+          <th>Durum</th>
+          <th class="num">Karakter</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="templateTableBody">
+        <% for (const template of templates) { %>
+          <tr data-template-row="<%= template.id %>">
+            <td><strong><%= template.name %></strong></td>
+            <td class="message-cell"><%= template.body %></td>
+            <td><span class="badge <%= template.is_active ? 'badge-success' : 'badge-muted' %>"><%= template.is_active ? 'Aktif' : 'Pasif' %></span></td>
+            <td class="num"><%= template.body.length %></td>
+            <td class="actions-cell">
+              <button type="button" class="btn btn-ghost btn-xs" data-edit-template="<%= template.id %>">Düzenle</button>
+              <button type="button" class="btn btn-danger-ghost btn-xs" data-delete-template="<%= template.id %>">Sil</button>
+            </td>
+          </tr>
+        <% } %>
+        <% if (!templates.length) { %>
+          <tr><td colspan="5" class="empty-state">Henüz şablon yok.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="modal" id="templateModal" aria-hidden="true">
+  <div class="modal-backdrop" data-close-modal></div>
+  <div class="modal-dialog modal-lg" role="dialog" aria-modal="true" aria-labelledby="templateModalTitle">
+    <div class="modal-head">
+      <div>
+        <h3 id="templateModalTitle">Yeni Şablon</h3>
+        <p class="muted">SMS metninde değişkenleri süslü parantez ile kullanın.</p>
+      </div>
+      <button type="button" class="icon-btn" data-close-modal aria-label="Kapat">×</button>
+    </div>
+    <div class="modal-body">
+      <form id="templateForm" class="form">
+        <input type="hidden" id="templateId">
+        <label class="field">
+          <span>Şablon Adı</span>
+          <input type="text" id="templateName" required maxlength="100">
+        </label>
+        <label class="field">
+          <span>Mesaj</span>
+          <textarea id="templateBody" rows="5" required maxlength="500"></textarea>
+          <small class="hint" id="templateCharCount">0 / 500 · 0 SMS</small>
+        </label>
+        <label class="check"><input type="checkbox" id="templateActive" checked><span>Aktif</span></label>
+        <div class="alert alert-danger hidden" id="templateFormError"></div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Kaydet</button>
+          <button type="button" class="btn btn-ghost" data-close-modal>Vazgeç</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="/public/js/settings.js" defer></script>

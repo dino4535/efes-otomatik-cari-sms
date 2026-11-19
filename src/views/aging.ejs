@@ -1,0 +1,325 @@
+<%
+  const canDetail = can('aging.detail');
+  const canExport = can('aging.export');
+  const canSend = can('sms.send');
+  const canSmsView = can('sms.view');
+  const canSmsSettings = can('sms.settings');
+%>
+<div class="page-head">
+  <div>
+    <h2>Cari Yaşlandırma</h2>
+    <p class="muted">Veritabanı <%= erpDatabase %> · Şube <%= branch %> · A tipi cariler · Fatura tarihine göre yaşlandırma · Tutarlar TL</p>
+  </div>
+  <div class="page-actions">
+    <button type="button" class="btn btn-primary" id="refreshAging">
+      <span class="btn-icon">↻</span> Verileri Yenile
+    </button>
+    <% if (canExport) { %>
+      <a class="btn btn-ghost" id="exportAging" href="/api/aging/export.xlsx">Excel İndir</a>
+    <% } %>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  <article class="kpi-card">
+    <span class="kpi-label">Toplam Açık Borç</span>
+    <strong class="kpi-value" id="kpiTotal">—</strong>
+    <span class="kpi-sub" id="kpiTotalSub">Hesaplanıyor…</span>
+  </article>
+  <article class="kpi-card kpi-danger">
+    <span class="kpi-label">30+ Gün Gecikmiş</span>
+    <strong class="kpi-value" id="kpiOverdue">—</strong>
+    <span class="kpi-sub" id="kpiOverdueSub">Hesaplanıyor…</span>
+  </article>
+  <article class="kpi-card">
+    <span class="kpi-label">30+ Borçlu Cari</span>
+    <strong class="kpi-value" id="kpiOverdueCustomers">—</strong>
+    <span class="kpi-sub" id="kpiCustomerSub">Hesaplanıyor…</span>
+  </article>
+  <article class="kpi-card kpi-muted">
+    <span class="kpi-label">Kontrol Toplamı</span>
+    <strong class="kpi-value" id="kpiControl">—</strong>
+    <span class="kpi-sub" id="kpiControlSub">Cari bakiyeleriyle karşılaştırma</span>
+  </article>
+</div>
+
+<div class="card filter-card">
+  <div class="bucket-row" id="bucketRow">
+    <button type="button" class="bucket-chip" data-bucket="">
+      <span>Tümü</span>
+      <strong id="bucketAll">—</strong>
+    </button>
+    <button type="button" class="bucket-chip" data-bucket="d0_14">
+      <span>0-14 Gün</span>
+      <strong id="bucketD0">—</strong>
+    </button>
+    <button type="button" class="bucket-chip" data-bucket="d15_21">
+      <span>15-21 Gün</span>
+      <strong id="bucketD15">—</strong>
+    </button>
+    <button type="button" class="bucket-chip" data-bucket="d22_30">
+      <span>22-30 Gün</span>
+      <strong id="bucketD22">—</strong>
+    </button>
+    <button type="button" class="bucket-chip bucket-danger" data-bucket="d31_45">
+      <span>31-45 Gün</span>
+      <strong id="bucketD31">—</strong>
+    </button>
+    <button type="button" class="bucket-chip bucket-danger" data-bucket="d46_60">
+      <span>46-60 Gün</span>
+      <strong id="bucketD46">—</strong>
+    </button>
+    <button type="button" class="bucket-chip bucket-danger" data-bucket="d61">
+      <span>61+ Gün</span>
+      <strong id="bucketD61">—</strong>
+    </button>
+  </div>
+
+  <div class="filters">
+    <label class="field field-inline">
+      <span>Ara</span>
+      <input type="search" id="filterSearch" placeholder="Cari kodu, isim veya telefon">
+    </label>
+    <label class="field field-inline">
+      <span>Rapor Tarihi</span>
+      <input type="date" id="filterAsOf" value="<%= today %>">
+    </label>
+    <label class="field field-inline">
+      <span>Tolerans (TL)</span>
+      <input type="number" id="filterTolerance" min="0" step="0.01" value="<%= settings['aging.tolerance'] || '0' %>">
+    </label>
+    <label class="field field-inline">
+      <span>Peşin Faturalar</span>
+      <select id="filterIncludePrepaid" title="Dahil edildiğinde aynı gün eşit fatura/tahsilat çiftleri FIFO ile hesaplanır; toplam borç değişmez, yaş dağılımı değişir.">
+        <option value="0">Hariç (Varsayılan)</option>
+        <option value="1">Dahil</option>
+      </select>
+    </label>
+    <label class="check">
+      <input type="checkbox" id="filterOnlyOverdue">
+      <span>Yalnızca 30+ gecikmiş</span>
+    </label>
+    <label class="check">
+      <input type="checkbox" id="filterWithPhone">
+      <span>Telefonu olanlar</span>
+    </label>
+    <button type="button" class="btn btn-ghost btn-sm" id="resetFilters">Filtreleri Temizle</button>
+  </div>
+
+  <div class="filter-meta">
+    <span id="agingMeta">Veriler yükleniyor…</span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-toolbar">
+    <div>
+      <strong id="tableCount">0 cari</strong>
+      <span class="muted" id="tableSummary"></span>
+    </div>
+    <div class="toolbar-note">
+      <span class="dot dot-green"></span> Açık bakiye
+      <span class="dot dot-red"></span> 30+ gecikmiş
+      <span class="muted">· Satıra tıklayarak detayı görüntüleyin</span>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table class="data-table aging-table" id="agingTable">
+      <thead>
+        <tr>
+          <th>Cari</th>
+          <th>Telefon</th>
+          <th class="num">Toplam Borç</th>
+          <th class="num">0-14</th>
+          <th class="num">15-21</th>
+          <th class="num">22-30</th>
+          <th class="num">31-45</th>
+          <th class="num">46-60</th>
+          <th class="num">61+</th>
+          <th class="num">30+ Toplam</th>
+          <th class="num">En Yaşlı</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="agingBody">
+        <tr><td colspan="12" class="empty-state">Veriler yükleniyor…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal" id="customerModal" aria-hidden="true">
+  <div class="modal-backdrop" data-close-modal></div>
+  <div class="modal-dialog modal-xl" role="dialog" aria-modal="true" aria-labelledby="customerModalTitle">
+    <div class="modal-head">
+      <div>
+        <h3 id="customerModalTitle">Cari Detayı</h3>
+        <p class="muted" id="customerModalMeta"></p>
+      </div>
+      <button type="button" class="icon-btn" data-close-modal aria-label="Kapat">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div id="detailLoading" class="empty-state">Cari detayı yükleniyor…</div>
+
+      <div id="detailContent" class="hidden">
+        <div class="detail-kpis" id="detailKpis"></div>
+        <div class="detail-buckets" id="detailBuckets"></div>
+
+        <div class="tabs" data-tabs>
+          <button type="button" class="tab active" data-tab="invoices">Açık Faturalar</button>
+          <button type="button" class="tab" data-tab="credits">Tahsilat / Alacaklar</button>
+          <button type="button" class="tab" data-tab="matches">Bire Bir Eşleşenler</button>
+          <% if (canSmsView) { %><button type="button" class="tab" data-tab="sms">SMS</button><% } %>
+        </div>
+
+        <div class="tab-panel" data-panel="invoices">
+          <div class="table-wrap">
+            <table class="data-table compact">
+              <thead>
+                <tr>
+                  <th>Tarih</th>
+                  <th>Belge</th>
+                  <th>Tür</th>
+                  <th>Açıklama</th>
+                  <th class="num">Tutar</th>
+                  <th class="num">Kalan</th>
+                  <th class="num">Gün</th>
+                  <th>Aralık</th>
+                </tr>
+              </thead>
+              <tbody id="detailInvoices"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="tab-panel hidden" data-panel="credits">
+          <div class="table-wrap">
+            <table class="data-table compact">
+              <thead>
+                <tr>
+                  <th>Tarih</th>
+                  <th>Belge</th>
+                  <th>Tür</th>
+                  <th>Açıklama</th>
+                  <th class="num">Tutar</th>
+                  <th class="num">Uygulanan</th>
+                  <th class="num">Kalan</th>
+                </tr>
+              </thead>
+              <tbody id="detailCredits"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="tab-panel hidden" data-panel="matches">
+          <div class="detail-kpis match-kpis" id="matchSummary"></div>
+          <div class="filters filters-wrap match-filters">
+            <span class="muted" id="matchMeta"></span>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table compact match-table">
+              <thead>
+                <tr>
+                  <th>Fatura</th>
+                  <th>Tahsilat</th>
+                  <th class="num">Fatura Tutarı</th>
+                  <th class="num">Tahsilat Tutarı</th>
+                  <th class="num">Eşleşen</th>
+                </tr>
+              </thead>
+              <tbody id="detailMatches">
+                <tr><td colspan="5" class="empty-state">Eşleşmeler yükleniyor…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <% if (canSmsView) { %>
+          <div class="tab-panel hidden" data-panel="sms">
+            <div class="detail-grid">
+              <section class="sub-card">
+                <h4>SMS Ayarları</h4>
+                <% if (canSmsSettings) { %>
+                  <form id="smsSettingsForm" class="form form-grid">
+                    <label class="field">
+                      <span>Telefon (opsiyonel)</span>
+                      <input type="text" name="phoneOverride" placeholder="ERP telefonu kullanılıyorsa boş bırakın">
+                    </label>
+                    <label class="field">
+                      <span>SMS Aralığı (gün)</span>
+                      <input type="number" name="intervalDays" min="0" max="365" placeholder="Genel ayar">
+                    </label>
+                    <label class="field">
+                      <span>Sonraki Gönderim</span>
+                      <input type="datetime-local" name="nextSmsAt">
+                    </label>
+                    <label class="field field-full">
+                      <span>Not</span>
+                      <input type="text" name="note" maxlength="255" placeholder="Cari ile ilgili kısa not">
+                    </label>
+                    <label class="check"><input type="checkbox" name="smsEnabled" checked><span>SMS gönderimi açık</span></label>
+                    <label class="check"><input type="checkbox" name="optOut"><span>SMS izni yok (opt-out)</span></label>
+                    <div class="form-actions field-full">
+                      <button type="submit" class="btn btn-primary btn-sm">SMS Ayarlarını Kaydet</button>
+                    </div>
+                  </form>
+                <% } else { %>
+                  <p class="muted">SMS ayarlarını düzenlemek için yetkiniz bulunmuyor.</p>
+                <% } %>
+              </section>
+
+              <section class="sub-card">
+                <h4>Manuel SMS</h4>
+                <% if (canSend) { %>
+                  <div class="form">
+                    <label class="field">
+                      <span>Şablon</span>
+                      <select id="smsTemplateSelect">
+                        <option value="">Varsayılan şablon</option>
+                      </select>
+                    </label>
+                    <label class="field">
+                      <span>Mesaj</span>
+                      <textarea id="smsMessage" rows="4" maxlength="500" placeholder="Mesajı düzenleyin…"></textarea>
+                      <small class="hint" id="smsCharCount">0 / 500 · 0 SMS</small>
+                    </label>
+                    <div class="form-actions">
+                      <button type="button" class="btn btn-ghost btn-sm" id="previewSms">Önizle</button>
+                      <button type="button" class="btn btn-primary btn-sm" id="sendSmsBtn">SMS Gönder</button>
+                    </div>
+                  </div>
+                <% } else { %>
+                  <p class="muted">Manuel SMS göndermek için yetkiniz bulunmuyor.</p>
+                <% } %>
+              </section>
+            </div>
+
+            <section class="sub-card">
+              <h4>SMS Geçmişi</h4>
+              <div class="table-wrap">
+                <table class="data-table compact">
+                  <thead>
+                    <tr>
+                      <th>Tarih</th>
+                      <th>Telefon</th>
+                      <th>Durum</th>
+                      <th>Tür</th>
+                      <th>Mesaj</th>
+                    </tr>
+                  </thead>
+                  <tbody id="smsHistoryBody">
+                    <tr><td colspan="5" class="empty-state">Kayıt yok.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/public/js/aging.js" defer></script>

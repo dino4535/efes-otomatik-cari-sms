@@ -1,0 +1,58 @@
+<div class="page-head">
+  <div>
+    <h2>İşlem Kayıtları</h2>
+    <p class="muted">Girişler, ayar değişiklikleri, kullanıcı işlemleri ve SMS gönderimleri</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="filters filters-wrap">
+    <label class="field field-inline">
+      <span>Ara</span>
+      <input type="search" id="auditSearch" placeholder="Kullanıcı, işlem, detay">
+    </label>
+    <label class="field field-inline">
+      <span>İşlem</span>
+      <input type="text" id="auditAction" placeholder="Örn. auth.login">
+    </label>
+    <label class="field field-inline">
+      <span>Kullanıcı</span>
+      <input type="text" id="auditUser" placeholder="Kullanıcı adı">
+    </label>
+    <label class="field field-inline">
+      <span>Başlangıç</span>
+      <input type="date" id="auditDateFrom">
+    </label>
+    <label class="field field-inline">
+      <span>Bitiş</span>
+      <input type="date" id="auditDateTo">
+    </label>
+    <button type="button" class="btn btn-ghost btn-sm" id="auditFilterBtn">Filtrele</button>
+  </div>
+
+  <div class="table-wrap">
+    <table class="data-table audit-table">
+      <thead>
+        <tr>
+          <th>Zaman</th>
+          <th>Kullanıcı</th>
+          <th>İşlem</th>
+          <th>Varlık</th>
+          <th>Detay</th>
+          <th>IP</th>
+        </tr>
+      </thead>
+      <tbody id="auditBody">
+        <tr><td colspan="6" class="empty-state">Kayıtlar yükleniyor…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pagination">
+    <button type="button" class="btn btn-ghost btn-sm" id="auditPrev">‹ Önceki</button>
+    <span id="auditPageInfo" class="muted">—</span>
+    <button type="button" class="btn btn-ghost btn-sm" id="auditNext">Sonraki ›</button>
+  </div>
+</div>
+
+<script src="/public/js/audit.js" defer></script>

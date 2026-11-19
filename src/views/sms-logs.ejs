@@ -1,0 +1,225 @@
+<%
+  const canSend = can('sms.send');
+  const canSettings = can('sms.settings');
+%>
+<div class="page-head" data-can-settings="<%= canSettings ? '1' : '0' %>">
+  <div>
+    <h2>SMS Yönetimi</h2>
+    <p class="muted">Gönderim kayıtları, planlanan SMS'ler ve otomatik gönderim durumu</p>
+  </div>
+  <div class="page-actions">
+    <button type="button" class="btn btn-ghost" id="refreshSmsBtn">Yenile</button>
+    <% if (canSend) { %>
+      <button type="button" class="btn btn-primary" id="runJobBtn">Otomatik İşi Çalıştır</button>
+    <% } %>
+  </div>
+</div>
+
+<div class="kpi-grid kpi-grid-4">
+  <article class="kpi-card">
+    <span class="kpi-label">Bugünkü Gönderim</span>
+    <strong class="kpi-value" id="smsTodayTotal">—</strong>
+    <span class="kpi-sub" id="smsTodaySub">Yükleniyor…</span>
+  </article>
+  <article class="kpi-card">
+    <span class="kpi-label">Başarılı / Simüle</span>
+    <strong class="kpi-value" id="smsSuccessTotal">—</strong>
+    <span class="kpi-sub" id="smsSuccessSub">Bugünkü kayıtlar</span>
+  </article>
+  <article class="kpi-card kpi-danger">
+    <span class="kpi-label">Başarısız</span>
+    <strong class="kpi-value" id="smsFailedTotal">—</strong>
+    <span class="kpi-sub">Bugünkü kayıtlar</span>
+  </article>
+  <article class="kpi-card kpi-muted">
+    <span class="kpi-label">Son Gönderim</span>
+    <strong class="kpi-value kpi-value-sm" id="smsLastSent">—</strong>
+    <span class="kpi-sub" id="smsJobStatus">Otomatik iş durumu bilinmiyor</span>
+  </article>
+</div>
+
+<div class="card">
+  <div class="tabs" data-tabs>
+    <button type="button" class="tab active" data-tab="logs">Gönderim Kayıtları</button>
+    <button type="button" class="tab" data-tab="scheduled">Planlanan SMS'ler</button>
+  </div>
+
+  <div class="tab-panel" data-panel="logs">
+    <div class="filters filters-wrap">
+      <label class="field field-inline">
+        <span>Ara</span>
+        <input type="search" id="logSearch" placeholder="Cari, telefon veya mesaj">
+      </label>
+      <label class="field field-inline">
+        <span>Durum</span>
+        <select id="logStatus">
+          <option value="">Tümü</option>
+          <option value="sent">Gönderildi</option>
+          <option value="simulated">Simüle edildi</option>
+          <option value="failed">Başarısız</option>
+          <option value="delivered">Teslim edildi</option>
+        </select>
+      </label>
+      <label class="field field-inline">
+        <span>Tür</span>
+        <select id="logTrigger">
+          <option value="">Tümü</option>
+          <option value="manual">Manuel</option>
+          <option value="scheduled">Otomatik</option>
+        </select>
+      </label>
+      <label class="field field-inline">
+        <span>Başlangıç</span>
+        <input type="date" id="logDateFrom">
+      </label>
+      <label class="field field-inline">
+        <span>Bitiş</span>
+        <input type="date" id="logDateTo">
+      </label>
+      <button type="button" class="btn btn-ghost btn-sm" id="logFilterBtn">Filtrele</button>
+    </div>
+
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Tarih</th>
+            <th>Cari</th>
+            <th>Telefon</th>
+            <th>Tür</th>
+            <th>Durum</th>
+            <th class="num">30+ Borç</th>
+            <th>Mesaj</th>
+            <th>Hata</th>
+          </tr>
+        </thead>
+        <tbody id="logBody">
+          <tr><td colspan="8" class="empty-state">Kayıtlar yükleniyor…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <button type="button" class="btn btn-ghost btn-sm" id="logPrev">‹ Önceki</button>
+      <span id="logPageInfo" class="muted">—</span>
+      <button type="button" class="btn btn-ghost btn-sm" id="logNext">Sonraki ›</button>
+    </div>
+  </div>
+
+  <div class="tab-panel hidden" data-panel="scheduled">
+    <div class="filters filters-wrap">
+      <label class="field field-inline">
+        <span>Ara</span>
+        <input type="search" id="scheduledSearch" placeholder="Cari kodu veya isim">
+      </label>
+      <button type="button" class="btn btn-ghost btn-sm" id="scheduledFilterBtn">Filtrele</button>
+      <span class="muted" id="scheduledGlobalInfo"></span>
+    </div>
+
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Cari</th>
+            <th>Telefon</th>
+            <th class="num">30+ Borç</th>
+            <th class="num">Aralık</th>
+            <th>Son SMS</th>
+            <th>Sonraki SMS</th>
+            <th>Durum</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="scheduledBody">
+          <tr><td colspan="8" class="empty-state">Planlanan SMS'ler yükleniyor…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <button type="button" class="btn btn-ghost btn-sm" id="scheduledPrev">‹ Önceki</button>
+      <span id="scheduledPageInfo" class="muted">—</span>
+      <button type="button" class="btn btn-ghost btn-sm" id="scheduledNext">Sonraki ›</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="sendSmsModal" aria-hidden="true">
+  <div class="modal-backdrop" data-close-modal></div>
+  <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="sendSmsModalTitle">
+    <div class="modal-head">
+      <div>
+        <h3 id="sendSmsModalTitle">SMS Gönder</h3>
+        <p class="muted" id="sendSmsMeta"></p>
+      </div>
+      <button type="button" class="icon-btn" data-close-modal aria-label="Kapat">×</button>
+    </div>
+    <div class="modal-body">
+      <form id="sendSmsForm" class="form">
+        <input type="hidden" id="sendCariKod">
+        <label class="field">
+          <span>Şablon</span>
+          <select id="sendTemplateId">
+            <option value="">Varsayılan şablon</option>
+            <% for (const template of templates) { %>
+              <option value="<%= template.id %>"><%= template.name %><%= template.is_active ? '' : ' (pasif)' %></option>
+            <% } %>
+          </select>
+        </label>
+        <label class="field">
+          <span>Mesaj</span>
+          <textarea id="sendMessage" rows="5" maxlength="500" placeholder="Mesajı düzenleyin…"></textarea>
+          <small class="hint" id="sendCharCount">0 / 500 · 0 SMS</small>
+        </label>
+        <div class="alert alert-danger hidden" id="sendSmsError"></div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" id="sendPreviewBtn">Önizle</button>
+          <button type="submit" class="btn btn-primary">Gönder</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="scheduleSmsModal" aria-hidden="true">
+  <div class="modal-backdrop" data-close-modal></div>
+  <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="scheduleSmsModalTitle">
+    <div class="modal-head">
+      <div>
+        <h3 id="scheduleSmsModalTitle">SMS Planı</h3>
+        <p class="muted" id="scheduleSmsMeta"></p>
+      </div>
+      <button type="button" class="icon-btn" data-close-modal aria-label="Kapat">×</button>
+    </div>
+    <div class="modal-body">
+      <form id="scheduleSmsForm" class="form">
+        <input type="hidden" id="scheduleCariKod">
+        <div class="form-grid">
+          <label class="field">
+            <span>Telefon (opsiyonel)</span>
+            <input type="text" id="schedulePhone" placeholder="ERP telefonu kullanılıyorsa boş bırakın">
+          </label>
+          <label class="field">
+            <span>SMS Aralığı (gün)</span>
+            <input type="number" id="scheduleInterval" min="0" max="365" placeholder="Genel ayar">
+          </label>
+          <label class="field">
+            <span>Sonraki Gönderim</span>
+            <input type="datetime-local" id="scheduleNextAt">
+          </label>
+          <label class="field">
+            <span>Not</span>
+            <input type="text" id="scheduleNote" maxlength="255">
+          </label>
+        </div>
+        <label class="check"><input type="checkbox" id="scheduleEnabled"><span>SMS gönderimi açık</span></label>
+        <label class="check"><input type="checkbox" id="scheduleOptOut"><span>SMS izni yok (opt-out)</span></label>
+        <div class="alert alert-danger hidden" id="scheduleSmsError"></div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Kaydet</button>
+          <button type="button" class="btn btn-ghost" data-close-modal>Vazgeç</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="/public/js/sms.js" defer></script>
