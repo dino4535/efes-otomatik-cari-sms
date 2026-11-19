@@ -110,9 +110,9 @@ Tüm ayarlar `.env` ve uygulama içindeki **Ayarlar** ekranından yönetilir. Ö
 | `APP_COMPANY_NAME` | Firma adı | `Efes` |
 | `APP_BRANCH` | Varsayılan şube kodu (kullanıcı bazlı değer yoksa) | `3` |
 | `APP_TIMEZONE` | Saat dilimi | `Europe/Istanbul` |
-| `ERP_SERVER` | SQL Server adresi | `192.168.12.192` |
+| `ERP_SERVER` | SQL Server adresi | `127.0.0.1` |
 | `ERP_DATABASE` | Varsayılan ERP veritabanı (kullanıcı bazlı değer yoksa) | `DINO2026` |
-| `ERP_USER` / `ERP_PASSWORD` | Salt okunur ERP kullanıcısı | `TEKNODES` / boş |
+| `ERP_USER` / `ERP_PASSWORD` | Salt okunur ERP kullanıcısı | `erp_kullanici` / boş |
 | `ERP_ENCRYPT` | SQL Server şifreli bağlantı | `false` |
 | `ERP_TRUST_CERT` | Sertifika doğrulamasını gevşet | `true` |
 | `APP_DB_PATH` | SQLite dosyası | `./data/app.db` |
@@ -330,7 +330,7 @@ docker compose down -v
 
 ### Docker notları
 
-- Konteyner, ERP sunucusuna (`192.168.12.192`) erişebilen ağda olmalıdır.
+- Konteyner, ERP sunucusuna (`127.0.0.1`) erişebilen ağda olmalıdır.
 - Linux'ta host ağı gerekiyorsa compose dosyasına `network_mode: host` eklenebilir; bu durumda `ports` kaldırılmalıdır.
 - Dışarıya açmadan önce HTTPS için reverse proxy (nginx/Caddy) kullanın.
 - `.env` dosyasını repoya veya imaja dahil etmeyin. `.dockerignore` bunu engeller.

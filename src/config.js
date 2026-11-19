@@ -24,10 +24,10 @@ const config = {
   timezone: process.env.APP_TIMEZONE || 'Europe/Istanbul',
 
   erp: {
-    server: process.env.ERP_SERVER || '192.168.12.192',
+    server: process.env.ERP_SERVER || '127.0.0.1',
     port: int(process.env.ERP_PORT, 1433),
     database: process.env.ERP_DATABASE || 'DINO2026',
-    user: process.env.ERP_USER || 'TEKNODES',
+    user: process.env.ERP_USER || 'erp_kullanici',
     password: process.env.ERP_PASSWORD || '',
     encrypt: bool(process.env.ERP_ENCRYPT, false),
     trustServerCertificate: bool(process.env.ERP_TRUST_CERT, true),
@@ -39,7 +39,7 @@ const config = {
 
   admin: {
     username: process.env.ADMIN_USERNAME || 'admin',
-    password: process.env.ADMIN_INITIAL_PASSWORD || 'Efes2026!',
+    password: process.env.ADMIN_INITIAL_PASSWORD || 'degistirin-bu-degeri',
     fullName: process.env.ADMIN_FULL_NAME || 'Sistem Yöneticisi',
   },
 };
