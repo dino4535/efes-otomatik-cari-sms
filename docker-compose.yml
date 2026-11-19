@@ -15,7 +15,7 @@ services:
       HOST: 0.0.0.0
       PORT: 3000
       APP_DB_PATH: /app/data/app.db
-      TZ: Europe/Istanbul
+      TZ: ${APP_TIMEZONE:-Europe/Istanbul}
     ports:
       - "${PORT:-5555}:3000"
     volumes:

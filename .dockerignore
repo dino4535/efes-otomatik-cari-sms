@@ -13,4 +13,5 @@ backups
 .idea
 .DS_Store
 Thumbs.db
+install-ubuntu.sh
 tests

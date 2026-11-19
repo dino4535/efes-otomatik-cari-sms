@@ -298,6 +298,36 @@ Yedek betiği `VACUUM INTO` kullanır ve ardından `PRAGMA integrity_check` ile 
 
 ## Docker ile Dağıtım (Linux)
 
+### Ubuntu'da otomatik kurulum
+
+Ubuntu 22.04/24.04 üzerinde Docker ve Docker Compose kurulumu dahil tek adımda kurulum:
+
+```bash
+git clone https://github.com/dino4535/efes-otomatik-cari-sms.git
+cd efes-otomatik-cari-sms
+chmod +x install-ubuntu.sh
+./install-ubuntu.sh
+```
+
+Betik sırasıyla:
+
+1. Docker / Docker Compose yoksa kurmayı teklif eder.
+2. Host portu, firma adı, şube, saat dilimi, ilk admin ve ERP bağlantı bilgilerini sorar.
+3. Bilgileri `0600` izinli `.env` dosyasına yazar; mevcut `.env` varsa yedekler.
+4. `SESSION_SECRET` değerini otomatik üretir.
+5. `docker compose up -d --build` ile sistemi başlatır.
+6. `/healthz` sağlık kontrolü başarılı olduktan sonra **kurulum betiğini kendisi siler**.
+7. Ekrana yerel ve ağ erişim adresini yazar.
+
+Varsayılan host portu **5555**'tir. Kurulum tamamlandıktan sonra betiği tekrar çalıştırmak gerekirse:
+
+```bash
+git checkout -- install-ubuntu.sh
+./install-ubuntu.sh
+```
+
+### Manuel Docker kurulumu
+
 1. Sunucuda Docker ve Docker Compose kurun.
 2. Projeyi kopyalayın ve `.env` dosyasını oluşturun.
 3. `NODE_ENV=production`, güçlü `SESSION_SECRET` ve doğru ERP bilgilerini ayarlayın.
@@ -331,6 +361,7 @@ docker compose down -v
 ### Docker notları
 
 - Konteyner, ERP sunucusuna (`127.0.0.1`) erişebilen ağda olmalıdır.
+- Ubuntu'da UFW aktifse seçilen portu açın: `sudo ufw allow 5555/tcp`.
 - Linux'ta host ağı gerekiyorsa compose dosyasına `network_mode: host` eklenebilir; bu durumda `ports` kaldırılmalıdır.
 - Dışarıya açmadan önce HTTPS için reverse proxy (nginx/Caddy) kullanın.
 - `.env` dosyasını repoya veya imaja dahil etmeyin. `.dockerignore` bunu engeller.
@@ -361,6 +392,7 @@ public/                  CSS ve tarayıcı JavaScript'i
 scripts/
   check-aging.js         ERP kontrol toplamı
   backup.js              SQLite yedeği
+install-ubuntu.sh        Ubuntu/Docker otomatik kurulum betiği (kurulumdan sonra kendini siler)
 tests/aging.test.js      Yaşlandırma birim testleri
 tests/ledger.test.js     Cari ekstresi birim testleri
 tests/stock.test.js      Stok hesaplama ve Excel birim testleri
