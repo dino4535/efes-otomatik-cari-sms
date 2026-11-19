@@ -522,6 +522,8 @@ test('stok Excel çalışma kitabı başlık, veri ve toplam satırlarını yaza
   assert.equal(worksheet.getRow(7).getCell(6).value, 120);
   assert.equal(worksheet.getRow(7).getCell(7).value, 240);
   assert.ok(worksheet.getRow(7).getCell(8).value instanceof Date);
+  assert.equal(worksheet.getRow(7).getCell(8).value.toISOString().slice(0, 10), '2026-11-01');
+  assert.equal(worksheet.getRow(7).getCell(11).value.toISOString().slice(0, 10), '2026-11-18');
   assert.equal(worksheet.getRow(8).getCell(1).value, '225030');
   assert.equal(worksheet.getRow(8).getCell(18).value, 'Stokta');
   assert.match(String(worksheet.getCell('A9').value), /Toplam/);

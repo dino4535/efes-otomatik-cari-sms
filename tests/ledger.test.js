@@ -323,14 +323,15 @@ test('cari ekstre Excel çıktısı vade, durum ve ödenme tarihi sütunlarını
   assert.equal(worksheet.getCell('E8').value, 'Ödendi');
   assert.equal(worksheet.getCell('F8').value, 1000);
   assert.equal(worksheet.getCell('G8').value, 0);
-  assert.equal(worksheet.getCell('H8').value.getDate(), 5);
-  assert.equal(worksheet.getCell('H8').value.getMonth(), 1);
+  assert.equal(worksheet.getCell('A8').value.toISOString().slice(0, 10), '2026-01-01');
+  assert.equal(worksheet.getCell('B8').value.toISOString().slice(0, 10), '2026-01-31');
+  assert.equal(worksheet.getCell('H8').value.toISOString().slice(0, 10), '2026-02-05');
   assert.equal(worksheet.getCell('L8').value, 1000);
   assert.equal(worksheet.getCell('I9').value, 'F2');
   assert.equal(worksheet.getCell('E9').value, 'Kısmi');
   assert.equal(worksheet.getCell('F9').value, 400);
   assert.equal(worksheet.getCell('G9').value, 600);
-  assert.equal(worksheet.getCell('H9').value.getDate(), 10);
+  assert.equal(worksheet.getCell('H9').value.toISOString().slice(0, 10), '2026-02-10');
   assert.equal(worksheet.getCell('L9').value, 1000);
   assert.equal(worksheet.getCell('L12').value, 2000);
   assert.equal(worksheet.getCell('M12').value, 1400);

@@ -73,7 +73,9 @@ function formatDateOnly(value) {
 function toExcelDate(value) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ''));
   if (!match) return null;
-  return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  // ExcelJS tarihi UTC seri numarasına çevirir. Yerel gece yarısı kullanılırsa
+  // UTC+3'te bir önceki günün 21:00'i yazılır ve Excel tarihi bir gün geri gösterir.
+  return new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
 }
 
 function formatDays(value, { signed = false } = {}) {
